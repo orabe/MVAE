@@ -12,6 +12,24 @@ class MVAE(nn.Module):
         self.label_decoder = LabelDecoder(z)
         self.poe = ProductOfExperts()
 
+    def forward(self, image_modal, label_modal):
+        # TBD
+        mu, logvar = self.smth 
+        # TODO: what is the most elegant way to treat the mu and logvar here
+        # TODO: How to realize the product of experts functionality
+
+        z = self.reparameterize(mu, logvar)
+        gen_image = self.image_decoder(z)
+        gen_label = self.label_decoder(z)
+
+        return gen_image, gen_label, mu, logvar
+
+    def reparameterize(self):
+        std = torch.exp(0.5*logvar)
+        eps = torch.randn_like(std)
+
+        return eps * std + mu
+
 
     
 class ImageEncoder(nn.Module):
@@ -28,8 +46,11 @@ class ImageEncoder(nn.Module):
         logits = self.fc2(h)
         logits = nn.ReLU(logits)
 
-        return self.fc31(logits), self.fc32(logits) # This is probably wrong, why is it this way in the picture though
-    
+        mu = self.fc31(logits)
+        var = self.fc32(logits)
+
+        return mu, var # This is probably wrong, why is it this way in the picture though
+        # NOTE: seems as this is the correct way (theoretically). fc31 is basically mu and fc32 is var
 
 class ImageDecoder(nn.Module):
     def __init__(self, z_dim):
@@ -68,7 +89,10 @@ class LabelEncoder(nn.Module):
         logits = self.fc3(h)
         logits = nn.ReLU(h)
 
-        return self.fc41(logits), self.fc42(logits)
+        mu = self.fc41(logits)
+        var = self.fc42(logits)
+
+        return mu, var
 
 class LabelDecoder(nn.Module):
     def __init__(self, z_dim):
