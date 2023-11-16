@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
-from torchvision.dataset import MNIST
+from torchvision.datasets import MNIST
 
 
 """
@@ -26,8 +26,11 @@ class CustomMNIST(Dataset):
 
         if self.transform:
             image = self.transform(image)
+        
+        one_hot_label = torch.zeros(10)
+        one_hot_label[label] = 1
 
-        return image, label
+        return image, one_hot_label
 
 
 """
