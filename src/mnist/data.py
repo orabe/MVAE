@@ -24,8 +24,9 @@ class CustomMNIST(Dataset):
     def __getitem__(self, idx):
         image, label = self.mnist_dataset[idx]
 
-        if self.transform:
-            image = self.transform(image)
+        # print(self.transform)
+        if not torch.is_tensor(image):
+            image = transforms.ToTensor()(image)
         
         one_hot_label = torch.zeros(10)
         one_hot_label[label] = 1
@@ -57,18 +58,17 @@ class MNISTDataLoader:
         self.train = train
 
         # Load MNIST dataset
-        mnist_dataset = MNIST(root=root, train=train, download=True, transform=transform)
+        mnist_dataset = MNIST(root=root, train=train, download=True, transform=None)
 
         # Create custom dataset
         self.custom_dataset = CustomMNIST(mnist_dataset, transform=transform, train=train)
 
         self.data_loader = DataLoader(
             dataset=self.custom_dataset,
-            batch_size=batch_size
+            batch_size=batch_size,
             shuffle=shuffle
         )
 
     def get_data_loader(self):
         return self.data_loader
-
 
