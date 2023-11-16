@@ -41,7 +41,6 @@ class CustomMNIST(Dataset):
     transform = transforms.Compose([transforms.ToTensor()])
     mnist_train_data_loader = MNISTDataLoader(transform=transform, train=True)
     mnist_test_data_loader = MNISTDataLoader(transform=transform, train=False)
-
 """
 class MNISTDataLoader:
     def __init__(
