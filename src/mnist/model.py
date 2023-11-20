@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class MVAE(nn.Module):
@@ -10,13 +11,21 @@ class MVAE(nn.Module):
         self.image_decoder = ImageDecoder(z)
         self.label_encoder = LabelEncoder(z)
         self.label_decoder = LabelDecoder(z)
+        self.z_dim = z
         self.poe = ProductOfExperts()
 
-    def forward(self, image_modal, label_modal):
+    def forward(self, image_modal=None, label_modal=None):
         # TBD
-        mu, logvar = self.smth 
+        if image_modal is not None:
+            mu, logvar = self.image_encoder(image_modal)
+        if label_modal is not None:
+            mu, logvar = self.label_encoder(label_modal)
         # TODO: what is the most elegant way to treat the mu and logvar here
         # TODO: How to realize the product of experts functionality
+
+        print("MU: " + str(mu))
+        print("LOGVAR: " + str(logvar))
+
 
         z = self.reparameterize(mu, logvar)
         gen_image = self.image_decoder(z)
@@ -37,7 +46,7 @@ class ImageEncoder(nn.Module):
         super(ImageEncoder, self).__init__()
         self.fc1 = nn.Linear(784, 512)
         self.fc2 = nn.Linear(512, 512)
-        self.fc3 = nn.Linear(512*2, n_latent*2)
+        self.fc3 = nn.Linear(512*2, z_dim*2)
 
     def forward(self, x):
         h = self.fc1(x.view(-1, 784))
@@ -75,6 +84,7 @@ class ImageDecoder(nn.Module):
 class LabelEncoder(nn.Module):
     def __init__(self, z_dim):
         super(LabelEncoder, self).__init__()
+
         self.fc1 = nn.Embedding(10, 512)
         self.fc2 = nn.Linear(512, 512)
         self.fc3 = nn.Linear(512, 512)
@@ -82,12 +92,16 @@ class LabelEncoder(nn.Module):
         self.fc42 = nn.Linear(512, z_dim)
 
     def forward(self, x):
+
         embed = self.fc1(x)
+        embed = embed.mean(dim=0)
+        # embed = F.relu(embed)
+
         h = self.fc2(embed)
-        h = nn.ReLU(h)
+        h = F.relu(h)
 
         logits = self.fc3(h)
-        logits = nn.ReLU(h)
+        logits = F.relu(h)
 
         mu = self.fc41(logits)
         var = self.fc42(logits)
@@ -113,3 +127,19 @@ class LabelDecoder(nn.Module):
         # softmax probably better to use during training function
 
         return logits
+
+class ProductOfExperts:
+    pass
+
+if __name__ == "__main__":
+    print("blub")
+    enc = LabelEncoder(20)
+    label = torch.LongTensor([0,1,0,0,0,0,0,0,0,0])
+    print(type(label))
+    print(label.size())
+    if label is not None:
+        print("YAS")
+    mu ,logvar = enc.forward(label)
+
+    print(mu.squeeze(0).size())
+    print(logvar.size())
