@@ -46,14 +46,15 @@ class ImageEncoder(nn.Module):
         super(ImageEncoder, self).__init__()
         self.fc1 = nn.Linear(784, 512)
         self.fc2 = nn.Linear(512, 512)
-        self.fc3 = nn.Linear(512*2, z_dim*2)
+        self.fc31 = nn.Linear(512, z_dim)
+        self.fc32 = nn.Linear(512, z_dim)
 
     def forward(self, x):
         h = self.fc1(x.view(-1, 784))
-        h = nn.ReLU(h)
+        h = F.relu(h)
 
         logits = self.fc2(h)
-        logits = nn.ReLU(logits)
+        logits = F.relu(logits)
 
         mu = self.fc31(logits)
         var = self.fc32(logits)
@@ -133,13 +134,12 @@ class ProductOfExperts:
 
 if __name__ == "__main__":
     print("blub")
-    enc = LabelEncoder(20)
-    label = torch.LongTensor([0,1,0,0,0,0,0,0,0,0])
-    print(type(label))
-    print(label.size())
-    if label is not None:
-        print("YAS")
-    mu ,logvar = enc.forward(label)
+    enc = ImageEncoder(20)
+    image = torch.rand(28, 28)
+
+    mu ,logvar = enc.forward(image)
 
     print(mu.squeeze(0).size())
-    print(logvar.size())
+    print(mu)
+    print(logvar.squeeze(0).size())
+    print(logvar)
