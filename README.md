@@ -22,8 +22,7 @@ Clone the repository:
    cd MVAE-project
    ```
 
-
-1. Run the main script of the MVAE:
+Run the main script of the MVAE:
 
    ```bash
    python model.py
