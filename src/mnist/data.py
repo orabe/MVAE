@@ -105,3 +105,46 @@ class MNISTDataLoader:
 # train_loader = mnist_data_loader.get_train_data_loader()
 # val_loader = mnist_data_loader.get_val_data_loader()
 # test_loader = mnist_data_loader.get_test_data_loader()
+
+def visualize_data(data="train", num_samples=5, images_per_row=5):
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    transform = transforms.Compose([transforms.ToTensor()])
+    generic_data_loader = MNISTDataLoader(transform=transform, shuffle=True)
+    
+    if data == "train":
+        sampled_dataloader = generic_data_loader.get_train_data_loader()
+    elif data == "val":
+        sampled_dataloader = generic_data_loader.get_val_data_loader()
+
+    elif data == "test":
+        sampled_dataloader = generic_data_loader.get_test_data_loader()
+    
+    else:
+        raise ValueError("The type of data you are referring to does not exist")
+    
+
+    indices = np.random.choice(len(sampled_dataloader.dataset), num_samples, replace=False)
+    samples = [sampled_dataloader.dataset[i] for i in indices]
+
+    # Plot the images
+    num_rows = (num_samples + images_per_row - 1) // images_per_row
+
+    # Plot the images in a grid layout
+    fig, axes = plt.subplots(num_rows, images_per_row, figsize=(15, 3 * num_rows))
+    for i in range(num_rows):
+        for j in range(images_per_row):
+            index = i * images_per_row + j
+            if index < num_samples:
+                image, label = samples[index]
+                axes[i, j].imshow(image.squeeze(), cmap='gray')
+                axes[i, j].set_title(f'Label: {label}')
+                axes[i, j].axis('off')
+            else:
+                axes[i, j].axis('off')
+
+    plt.show()
+
+# if __name__=="__main__":
+    # visualize_data("train", 20)

@@ -33,5 +33,26 @@ def load_checkpoint(file_path, use_cuda=False):
 
     return model, optimizer, checkpoint
 
-def plot_loss_curve(train=True, model_path="./trained_models/final_best_epoch.pth.tar"):
-    pass
+def plot_loss_curve(train=True, model_path="./trained_models/epoch_500.pth.tar"):
+    import matplotlib.pyplot as plt
+
+    _, _, checkpoint = load_checkpoint(file_path=model_path)
+    if train:
+        name = "Training Loss"
+        loss_list = checkpoint["train_loss_list"]
+    
+    elif not train:
+        name = "Validation Loss"
+        loss_list = checkpoint["val_loss_list"]
+
+    epoch_range = range(1, len(loss_list) + 1)
+
+    plt.plot(epoch_range, loss_list, label=name)
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.title("{} Curve".format(name))
+    plt.legend()
+    plt.show()
+    
+# if __name__=="__main__":
+#     plot_loss_curve(train=False)
