@@ -2,6 +2,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from torchvision.datasets import MNIST
+from torch.utils.data.sampler import SubsetRandomSampler
 
 
 """
@@ -24,14 +25,13 @@ class CustomMNIST(Dataset):
     def __getitem__(self, idx):
         image, label = self.mnist_dataset[idx]
 
-        # print(self.transform)
         if not torch.is_tensor(image):
             image = transforms.ToTensor()(image)
         
-        one_hot_label = torch.zeros(10)
-        one_hot_label[label] = 1
+        # one_hot_label = torch.zeros(10)
+        # one_hot_label[label] = 1
 
-        return image, one_hot_label
+        return image, label
 
 
 """
@@ -49,25 +49,59 @@ class MNISTDataLoader:
             batch_size=64,
             transform=None,
             shuffle=True,
-            train=True
+            # train=True
     ):
+        
         self.transform = transform
         self.batch_size = batch_size
         self.shuffle = shuffle
-        self.train = train
 
         # Load MNIST dataset
-        mnist_dataset = MNIST(root=root, train=train, download=True, transform=None)
+        mnist_dataset = MNIST(root=root, train=True, download=True, transform=None)
 
-        # Create custom dataset
-        self.custom_dataset = CustomMNIST(mnist_dataset, transform=transform, train=train)
+        num_train = 50000
+        num_val = 10000
+        num_test = 10000
+        indices = list(range(len(mnist_dataset)))
 
-        self.data_loader = DataLoader(
-            dataset=self.custom_dataset,
+        if shuffle:
+            indices = torch.randperm(len(mnist_dataset)).tolist()
+        
+        train_sampler = SubsetRandomSampler(indices[:num_train])
+        val_sampler = SubsetRandomSampler(indices[num_train:num_train+num_val])
+        test_sampler = SubsetRandomSampler(indices[num_train+num_val : num_train+num_val+num_test])
+
+        self.train_data_loader = DataLoader(
+            dataset=CustomMNIST(mnist_dataset, transform=transform, train=True),
             batch_size=batch_size,
-            shuffle=shuffle
+            sampler=train_sampler
         )
 
-    def get_data_loader(self):
-        return self.data_loader
+        self.val_data_loader = DataLoader(
+            dataset=CustomMNIST(mnist_dataset, transform=transform, train=True),
+            batch_size=batch_size,
+            sampler=val_sampler
+        )
 
+        self.test_data_loader = DataLoader(
+            dataset=CustomMNIST(mnist_dataset, transform=transform, train=False),
+            batch_size=batch_size,
+            sampler=test_sampler
+        )
+
+    def get_train_data_loader(self):
+        return self.train_data_loader
+
+    def get_val_data_loader(self):
+        return self.val_data_loader
+
+    def get_test_data_loader(self):
+        return self.test_data_loader
+
+# Usage:
+# transform = transforms.Compose([transforms.ToTensor()])
+# mnist_data_loader = MNISTDataLoader(transform=transform, shuffle=True)
+
+# train_loader = mnist_data_loader.get_train_data_loader()
+# val_loader = mnist_data_loader.get_val_data_loader()
+# test_loader = mnist_data_loader.get_test_data_loader()
