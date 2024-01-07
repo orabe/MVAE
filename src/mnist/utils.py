@@ -18,9 +18,6 @@ def save_checkpoint(state, is_best, folder='./trained_models', filename='checkpo
     if not os.path.isdir(folder):
         os.mkdir(folder)
     torch.save(state, os.path.join(folder, filename))
-    # if is_best:
-    #     shutil.copyfile(os.path.join(folder, filename),
-    #                     os.path.join(folder, 'model_best.pth.tar'))
 
         
 def load_checkpoint(file_path, use_cuda=False):
@@ -55,5 +52,5 @@ def plot_loss_curve(train=True, model_path="./trained_models/epoch_500.pth.tar")
     plt.savefig("./imgs/{}.png".format(name))
     plt.show()
     
-if __name__=="__main__":
-    plot_loss_curve(train=True)
+# if __name__=="__main__":
+#     plot_loss_curve(train=True)

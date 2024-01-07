@@ -39,7 +39,7 @@ if __name__=="__main__":
     beta_anneal = PARAMS["annealing_factor"]
     lr = PARAMS["lr"]
 
-    if os.path.exists('./trained_models/final_best_ejpoch.pth.tar'):
+    if os.path.exists('./trained_models/final_best_epoch.pth.tar'):
         model, optimizer, checkpoint = load_checkpoint("./trained_models/final_best_epoch.pth.tar")
         train_loss_list = checkpoint["train_loss_list"]
         val_loss_list = checkpoint["val_loss_list"]
