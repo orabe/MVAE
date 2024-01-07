@@ -16,17 +16,11 @@ class MVAE(nn.Module):
     def forward(self, image_modal=None, label_modal=None):
         # TBD
         mu, logvar = self.prepare_poe(image_modal, label_modal)
-        print("LOGVAR")
-        print(logvar.size())
-        print("MU")
-        print(mu.size())
+
         poe_mu, poe_logvar = self.compute_poe(mu, logvar)
     
         z = self.reparameterize(poe_mu, poe_logvar)
-        print("Z: ")
-        print(z.size())
-        print(z)
-        
+
         if image_modal is not None:
             gen_image = self.image_decoder(z)
         else:
@@ -36,36 +30,30 @@ class MVAE(nn.Module):
         else:
             gen_label = None
         
-        print("GEN IMAGE")
-        print(gen_image.size())
 
-        return gen_image, gen_label, mu, logvar
+        return gen_image, gen_label, poe_mu, poe_logvar
 
     def reparameterize(self, poe_mu, poe_logvar):
-        print("#"*20)
-        print(poe_logvar.size())
         std = torch.exp(0.5*poe_logvar)
-        print(std.size())
+        
         eps = torch.randn_like(std)
-        print("EPS: ")
-        print(eps.size())
         return eps * std + poe_mu
     
-    def prior_experts(self, n_samples):
-        normal_mu = torch.zeros((n_samples, self.z_dim))
-        normal_logvar = torch.zeros((n_samples, self.z_dim))
+    def prior_expert(self, size):
+        normal_mu = torch.zeros(size)
+        normal_logvar = torch.zeros(size)
         return normal_mu, normal_logvar
 
     # The heart of the implementation
     def compute_poe(self, mu, logvar, eps=1e-8):
         # VAE learns logvar, but we need var
         var = torch.exp(logvar) + eps
-        print(var.size())
+
         # In paper T is inverse of covariance matrix, which is 1/var
         T = 1. / var
 
         cov_term = torch.sum(T, dim=0)
-        print("denom: " + str(cov_term.size()))
+
         poe_cov = 1 / cov_term
         poe_mu = poe_cov * torch.sum(mu * T, dim=0)
 
@@ -79,32 +67,20 @@ class MVAE(nn.Module):
         if image_modal is None and label_modal is None:
             assert("Both modalities are None. At least one modality must be present.")
         
-        mus, logvars = [], []
+        n_samples = image_modal.size(0) if image_modal is not None else label_modal.size(0)        
+        mu, logvar = self.prior_expert(size=(1,n_samples, self.z_dim))
+        
         if image_modal is not None:
             img_mu, img_logvar = self.image_encoder(image_modal)
-            mus.extend([img_mu])
-            logvars.extend([img_logvar])
-            n_samples = img_mu.size(0)
+            mu     = torch.cat((mu, img_mu.unsqueeze(0)), dim=0)
+            logvar = torch.cat((logvar, img_logvar.unsqueeze(0)), dim=0)
 
         if label_modal is not None:
-            label_mu, label_logvar = self.label_encoder(label_modal)
-            mus.extend([label_mu])
-            logvars.extend([label_logvar])
-            n_samples = label_mu.size(0)
+            lbl_mu, lbl_logvar = self.label_encoder(label_modal)
+            mu     = torch.cat((mu, lbl_mu.unsqueeze(0)), dim=0)
+            logvar = torch.cat((logvar, lbl_logvar.unsqueeze(0)), dim=0)
         
-        prior_mu, prior_logvar = self.prior_experts(n_samples)
-        print("PRIOR MU")
-        print(prior_mu.size())
-        print("PRIOR LOGVAR")
-        print(prior_logvar.size())
-        mus.extend([prior_mu]), logvars.extend([prior_logvar])
-
-        stacked_mu = torch.stack(mus)
-        print("STACKED MU")
-        print(stacked_mu.size())
-        stacked_logvars = torch.stack(logvars)
-
-        return stacked_mu, stacked_logvars
+        return mu, logvar
 
 
 
@@ -197,7 +173,7 @@ class LabelDecoder(nn.Module):
         return logits
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
     # image = torch.rand(64, 28, 28)
     # enc = MVAE(20)
@@ -225,16 +201,19 @@ if __name__ == "__main__":
     # if gen_label is not None: print(gen_label.size())
     # print(gen_label)
 
-    from torch.utils.data import DataLoader
-    from torchvision import datasets
-    import torchvision.transforms as transforms
+    # from torch.utils.data import DataLoader
+    # from torchvision import datasets
+    # import torchvision.transforms as transforms
 
-    transformation = transforms.ToTensor()
-    train = datasets.MNIST(root='./mnist', train=True, download=True, transform=transformation)
-    test = datasets.MNIST(root='./mnist', train=False, download=True, transform=transformation)
+    # transformation = transforms.ToTensor()
+    # train = datasets.MNIST(root='./mnist', train=True, download=True, transform=transformation)
+    # test = datasets.MNIST(root='./mnist', train=False, download=True, transform=transformation)
 
-    train_loader = DataLoader(train, batch_size=64, shuffle=False)
-    test_loader = DataLoader(test, batch_size=64, shuffle=False)
-    model = MVAE(20)
-    for x, y in train_loader:
-        logit = model(x,y)
+    # train_loader = DataLoader(train, batch_size=100, shuffle=False)
+    # test_loader = DataLoader(test, batch_size=100, shuffle=False)
+    # model = MVAE(64)
+    # for i, (x, y) in enumerate(train_loader):
+    #     # print("#"*20)
+    #     # print(y)
+    #     # print("#"*20)
+    #     gen_image_joint, gen_label_joint, mu_joint, logvar_joint = model(image_modal=x, label_modal=y)
