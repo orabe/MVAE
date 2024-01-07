@@ -147,4 +147,4 @@ def visualize_data(data="train", num_samples=5, images_per_row=5):
     plt.show()
 
 # if __name__=="__main__":
-    # visualize_data("train", 20)
+#     visualize_data("train", 20)
