@@ -52,7 +52,8 @@ def plot_loss_curve(train=True, model_path="./trained_models/epoch_500.pth.tar")
     plt.ylabel("Loss")
     plt.title("{} Curve".format(name))
     plt.legend()
+    plt.savefig("./imgs/{}.png".format(name))
     plt.show()
     
-# if __name__=="__main__":
-#     plot_loss_curve(train=False)
+if __name__=="__main__":
+    plot_loss_curve(train=True)
