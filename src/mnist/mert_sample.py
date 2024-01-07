@@ -36,7 +36,7 @@ def fetch_label(label):
 if __name__=="__main__":
 
   condition_on_image = None
-  condition_on_text = 7
+  condition_on_text = 5
   n_samples = 64
 
   model_path = './trained_models/final_best_epoch.pth.tar'
