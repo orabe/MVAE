@@ -12,7 +12,11 @@ The MVAE is implemented currently with only the MNIST dataset. You can use the a
 ### Prerequisites
 
 - Python (>=3.6)
-- PyTorch
+- torch (>= 2.0.1)
+- torchvision (>= 0.15.2)
+- numpy (>= 1.24.3)
+- matplotlib (>= 3.7.1)
+
 
 ### Installation and usage
 
@@ -54,7 +58,7 @@ The MVAE is implemented currently with only the MNIST dataset. You can use the a
    ```
 
    Specify a location to store the resulting weights in:
-   
+
    ```
    src/<dataset_name>/train.py
    ```
