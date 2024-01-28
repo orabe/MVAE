@@ -4,3 +4,8 @@
 # ignore jupyter notebook files
 *.ipynb
 
+# ignore raw MNIST data
+data
+
+# ignore py bytecode
+*.pyc
