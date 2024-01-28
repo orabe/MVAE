@@ -3,6 +3,8 @@ import shutil
 import torch
 import torch.optim as optim
 from model import MVAE
+from torchvision import transforms, datasets
+import numpy as np
 
 PARAMS = {
     "epochs": 500,
@@ -51,6 +53,59 @@ def plot_loss_curve(train=True, model_path="./trained_models/epoch_500.pth.tar")
     plt.legend()
     plt.savefig("./imgs/{}.png".format(name))
     plt.show()
+
+def fetch_image(label):
+    mnist_dataset = datasets.MNIST('./data', train=False, download=True, 
+                                    transform=transforms.ToTensor())
+    images = mnist_dataset.test_data.numpy()
+    labels = mnist_dataset.test_labels.numpy()
+    images = images[labels == label]
+    image  = images[np.random.choice(np.arange(images.shape[0]))]
+    image  = torch.from_numpy(image).float() 
+    image  = image.unsqueeze(0)
+    return image
+
+def fetch_label(label):
+    label = torch.LongTensor([label])
+    return label
+
+
+def check_modality_cond(condition_on_image, condition_on_text, model) :
+    image = None
+    label = None
     
+    if not condition_on_image and not condition_on_text:
+        mu = torch.Tensor([0])
+        std = torch.Tensor([1])
+
+    elif condition_on_image and not condition_on_text:
+        image = fetch_image(condition_on_image)
+        tmp_mu, tmp_logvar = model.prepare_poe(image_modal=image, label_modal=None)
+
+        mu, logvar = model.compute_poe(tmp_mu, tmp_logvar)
+        std = logvar.mul(0.5).exp_()
+
+    elif condition_on_text and not condition_on_image:
+        label = fetch_label(condition_on_text)
+
+        tmp_mu, tmp_logvar = model.prepare_poe(label_modal=label, image_modal=None)
+
+        mu, logvar = model.compute_poe(tmp_mu, tmp_logvar)
+
+        std = logvar.mul(0.5).exp_()
+
+    elif condition_on_text and condition_on_image:
+        image = fetch_image(condition_on_image)
+        label = fetch_label(condition_on_text)
+
+        tmp_mu, tmp_logvar = model.prepare_poe(image_modal=image, label_modal=label)
+
+    mu, logvar = model.compute_poe(tmp_mu, tmp_logvar)
+    std = logvar.mul(0.5).exp_()
+    
+    return mu, std, image, label
+        
+    
+      
 # if __name__=="__main__":
 #     plot_loss_curve(train=True)
