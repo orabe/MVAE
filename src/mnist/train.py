@@ -9,6 +9,7 @@ from tqdm import tqdm
 from torchvision import transforms
 import os
 from utils import PARAMS, save_checkpoint, load_checkpoint
+import torch.optim.lr_scheduler as lr_scheduler
 
 def elbo_mnist(gen_image, image, gen_label, label, mu, logvar,
               lambda_image=PARAMS["lambda_image"], lambda_label=PARAMS["lambda_label"], annealing_factor=1.):
@@ -45,6 +46,7 @@ if __name__=="__main__":
         val_loss_list = checkpoint["val_loss_list"]
         start_index = len(train_loss_list)
         best_loss = val_loss_list[-1]
+        lr = 1e-6
 
     else:
         model = MVAE(latent_size)
@@ -53,7 +55,7 @@ if __name__=="__main__":
         start_index = 0
         best_loss = np.inf       
         optimizer = optim.Adam(model.parameters(), lr=lr)
-
+        scheduler = CustomScheduler(optimizer, start_lr=1e-3, end_lr=2e-6, step_size=5)
 
 
     transform = transforms.Compose([transforms.ToTensor()])
@@ -92,6 +94,8 @@ if __name__=="__main__":
               total_loss += loss.item()
 
               loss.backward()
+              torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+
               optimizer.step()
     
         average_loss = total_loss / len(train_dataloader)
