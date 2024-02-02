@@ -97,7 +97,10 @@ if __name__=="__main__":
               torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
 
               optimizer.step()
-    
+
+        if scheduler is not None:
+          scheduler.step()
+
         average_loss = total_loss / len(train_dataloader)
         train_loss_list.append(average_loss)
         print(f'Epoch {i + 1}/{epochs}, Average Loss: {average_loss:.4f}')
