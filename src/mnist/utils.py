@@ -16,6 +16,22 @@ PARAMS = {
     "lambda_label": 50.0
 }
 
+import torch.optim.lr_scheduler as lr_scheduler
+class CustomScheduler(lr_scheduler._LRScheduler):
+    def __init__(self, optimizer, start_lr=1e-3, end_lr=1e-6, step_size=10, last_epoch=-1):
+        self.start_lr = start_lr
+        self.end_lr = end_lr
+        self.step_size = step_size
+        super(CustomScheduler, self).__init__(optimizer, last_epoch)
+
+    def get_lr(self):
+        if self.last_epoch % self.step_size == 0 and self.last_epoch > 0:
+            current_lr = self.optimizer.param_groups[0]['lr']
+            if current_lr > self.end_lr:
+                new_lr = current_lr / 10
+                return [new_lr]
+        return [self.optimizer.param_groups[0]['lr']]
+
 def save_checkpoint(state, is_best, folder='./trained_models', filename='checkpoint.pth.tar'):
     if not os.path.isdir(folder):
         os.mkdir(folder)
