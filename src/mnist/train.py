@@ -8,7 +8,7 @@ from data import MNISTDataLoader
 from tqdm import tqdm
 from torchvision import transforms
 import os
-from utils import PARAMS, save_checkpoint, load_checkpoint
+from utils import PARAMS, save_checkpoint, load_checkpoint, CustomScheduler
 import torch.optim.lr_scheduler as lr_scheduler
 
 def elbo_mnist(gen_image, image, gen_label, label, mu, logvar,
